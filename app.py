@@ -19,15 +19,20 @@ def index():
     expenses = c.fetchall()
     c.execute('SELECT SUM(amount) FROM expenses')
     total = c.fetchone()[0] or 0
-    currency = expenses[0][3] if expenses else 'USD'  # Default to USD if no expenses
+    currency = expenses[0][3] if expenses else ''  # Set to empty string if no expenses
+
+    # Prepare data for the chart
+    descriptions = [expense[1] for expense in expenses]
+    amounts = [expense[2] for expense in expenses]
+
     conn.close()
-    return render_template('index.html', expenses=expenses, total=total, currency=currency)
+    return render_template('index.html', expenses=expenses, total=total, currency=currency, descriptions=descriptions, amounts=amounts)
 
 @app.route('/add', methods=['POST'])
 def add_expense():
     description = request.form['description']
     amount = request.form['amount']
-    currency = request.form['currency']  # Get the currency from the form
+    currency = request.form['currency']
     conn = sqlite3.connect('expenses.db')
     c = conn.cursor()
     c.execute('INSERT INTO expenses (description, amount, currency) VALUES (?, ?, ?)', (description, amount, currency))
@@ -40,6 +45,27 @@ def delete_expense(expense_id):
     conn = sqlite3.connect('expenses.db')
     c = conn.cursor()
     c.execute('DELETE FROM expenses WHERE id = ?', (expense_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('index'))
+
+@app.route('/edit/<int:expense_id>', methods=['GET'])
+def edit_expense(expense_id):
+    conn = sqlite3.connect('expenses.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM expenses WHERE id = ?', (expense_id,))
+    expense = c.fetchone()
+    conn.close()
+    return render_template('edit.html', expense=expense)
+
+@app.route('/update/<int:expense_id>', methods=['POST'])
+def update_expense(expense_id):
+    description = request.form['description']
+    amount = request.form['amount']
+    currency = request.form['currency']
+    conn = sqlite3.connect('expenses.db')
+    c = conn.cursor()
+    c.execute('UPDATE expenses SET description = ?, amount = ?, currency = ? WHERE id = ?', (description, amount, currency, expense_id))
     conn.commit()
     conn.close()
     return redirect(url_for('index'))

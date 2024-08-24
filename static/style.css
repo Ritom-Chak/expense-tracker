@@ -26,11 +26,14 @@ h2 {
 }
 
 .footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
     background-color: #343a40;
     color: white;
     text-align: center;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+.container.mt-5.mb-5 {
+    margin-bottom: 100px; /* Adds space to ensure the footer does not overlap */
 }
